@@ -3,6 +3,9 @@ Type: Package
 Title: The Title of the Project
 Version: 0.0.0.9000
 Authors@R: c(
+    person(given   = "Mithila",
+           family  = "Unkule",
+           role    = c("aut", "cre", "cph")),
     person(given   = "Camille",
            family  = "Piponiot",
            role    = c("aut", "cre", "cph"),
