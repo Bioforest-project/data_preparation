@@ -1,0 +1,163 @@
+---
+title: "Data preparation for WG3"
+author: "Camille Piponiot"
+date: "2024-07-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+library(data.table)
+library(BIOMASS)
+library(ggplot2)
+```
+
+## Load data (Paracou)
+
+```{r load-data}
+harmonized_files = list.files(path = "data/raw-data/", full.names = TRUE, pattern = "paracou")
+
+data = 
+  lapply(harmonized_files, read.csv) |> 
+  rbindlist() |>
+  subset(LifeStatus == TRUE) |> 
+  subset(!(Site == "Paracou" & as.numeric(Plot) == 16)) |>
+  subset(!(Site == "Paracou" & (Year %in% c(1996, 1998, 2000, 2002)))) |> # Paracou: remove partial census years
+  subset(Circ/pi >= MinDBH) |> 
+  subset(!(Site == "Paracou" & Year == 2010 & Plot == 15)) |> ## one fourth of plot 15 wasn't censused in 2010
+  subset(!(Genus %in% c("Oenocarpus", "Euterpe", "Astrocaryum") | VernName =="murumuru")) # remove palms
+
+print(summary(data))
+```
+
+
+## Taxonomic correction
+
+## DBH correction
+
+## Functional traits
+
+```{r get-ft-value}
+# get wood density 
+data[, wd := BIOMASS::getWoodDensity(Genus, Species, stand = Plot)$meanWD]
+```
+
+```{r plot-ft}
+# plot distribution of wood density values
+ggplot(data, aes(x=wd)) + 
+  geom_histogram() +
+  labs(x = "Wood density (g.cm-3)") +
+  theme_classic()
+```
+
+## DBH classes
+
+We define two size classes: small trees with a DBH between 10 and 20 cm, and trees with a DBH $\geq$ 20 cm. 
+We do not allow large trees to return to the "small" size class, which occurs when the DBH of trees oscillates around 20 cm DBH.  
+
+```{r tree-size-class}
+# small (10-20 cm DBH) and large (>= 20 cm DBH) trees
+data[, class := 1 + ((Circ/pi) >= 20)]
+
+# avoid trees switching between classes: once a tree is 'large' it cannot go back to 'small'
+setorder(data, Year)
+data[IdTree %in% data[class==2, unique(IdTree)], 
+     YL := min(Year[class==2]), .(IdTree)] # YL: first year that a tree becomes large (defined by tree)
+data[!is.na(YL) & Year > YL, class := 2] # after YL: a tree cannot become small again
+```
+
+
+```{r check-corr-class, fig.height= 6, fig.width=10}
+# select a sample of 6 trees that have corrected size classes
+CorrClass = sample(data[class == 2 & Circ/pi < 20, unique(IdTree)], 12)
+subset(data, IdTree %in% CorrClass) |> 
+  ggplot(aes(x = Year, y = Circ/pi, col = factor(class))) +
+  geom_hline(yintercept = 20, lty=2) +
+  geom_point() + 
+  geom_line() + 
+  facet_wrap(~IdTree, scales = "free") 
+```
+
+# Tree-by-tree stocks and fluxes
+
+```{r census-interval}
+# get info on census intervals (by plot) to be used in flux calculation
+dfYear = data[, .(Year = sort(unique(Year)),
+                  firstCensus = min(Year),
+                  NextCensus = c(sort(unique(Year))[-1], NA), # year of next census
+                  dT = c(diff(sort(unique(Year))), NA)), # census interval between this census and the next
+              .(Site, Plot)]
+data = merge(data, dfYear, by = c("Site", "Plot", "Year"))
+```
+
+We divide trees into recruits (year of first measurement of a tree), other live trees, and dead trees (census when trees are recorded as dead: they are given a DBH = 0 cm). 
+
+```{r tree-status}
+# live trees
+data[, status := "A"]
+
+# trees on year of recruitment: status = "R" for recruited tree
+data[, recrYear := min(Year), .(IdTree)] # first year of measurement by tree
+data[Year == recrYear & Year != firstCensus, status := "R"]
+
+# mortality: add one measurement with DBH = 0 after tree death
+data[, mortYear := max(NextCensus), .(IdTree)]
+dataMort = data[mortYear == NextCensus & !is.na(mortYear)]
+dataMort[, `:=`(
+  Year = NextCensus,
+  status = "M",
+  Circ = 0,
+  dT = NextCensus - Year
+)]
+data = rbind(data, dataMort)
+```
+
+We then calculate basal area per tree, and the tree-level change in basal area between two censuses. 
+
+```{r ba-stocks-and-fluxes}
+setorder(data, Year)
+# basal area 
+data[, ba := pi*(Circ/pi/200)**2]
+# change in basal area (m2/yr) by tree
+data[, dba := c(diff(ba)/diff(Year), NA), .(IdTree)]
+# for recruits: their basal area change is their basal area divided by the
+# census interval before their recruitment
+data[status == "R", dba := ba/dT]
+```
+
+# Plot-level variables
+
+```{r}
+dataPlot = 
+  rbind(
+    # basal area stocks and fluxes
+    data[, .(
+      stock = sum(ba[status != "R"])/6.25, 
+      mortality = sum(dba[status == "M"])/6.25, 
+      recruitment = sum(dba[status == "R"])/6.25, 
+      growth = sum(dba[status == "A"])/6.25, 
+      meas = "ba"), 
+      .(Site, Plot, Year, class)],
+    # mean wood density associated with stocks and fluxes
+    data[, .(
+      stock = weighted.mean(wd[status != "R"], ba[status != "R"]), 
+      mortality = weighted.mean(wd[status == "M"], dba[status == "M"]), 
+      recruitment = weighted.mean(wd[status == "R"], dba[status == "R"]), 
+      growth = weighted.mean(wd[status == "A"], dba[status == "A"]), 
+      meas = "wd"
+    ), .(Site, Plot, Year, class)],
+    # 'stocks' and fluxes of tree abundance
+    data[, .(
+      stock = sum(status != "R")/6.25, 
+      mortality = sum(status == "M")/unique(dT)/6.25, 
+      recruitment = sum(status == "R")/unique(dT)/6.25, 
+      growth = NA, 
+      meas = "n"
+    ), .(Site, Plot, Year, class)]
+  )
+```
+
+```{r save-results}
+save(dataPlot, file = "data/derived-data/dataPlot_WG3.rda")
+```
