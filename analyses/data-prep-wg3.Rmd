@@ -167,17 +167,37 @@ dataPlot =
       meas = "wd_n"
     ), .(Site, Plot, Year, class)]
   )
+
+dataPlot = melt(dataPlot, measure.vars = c("stock", "mortality", "recruitment", "growth"))
+
+# remove fluxes on the last census of measurement
+dataPlot[variable != "stock" & Year == max(Year), value := NA, .(Site)]
 ```
+
+## Add metadata
+
+```{r}
+# Paracou treatments
+PlotInfo = data.frame(
+  Site = "Paracou",
+  Plot = 1:15, 
+  treat = "logged"
+)
+# Paracou control plots
+PlotInfo$treat[PlotInfo$Plot %in% c(1, 6, 11, 13:15)] = "control"
+dataPlot = merge(PlotInfo, dataPlot)
+```
+
 
 ```{r save-results}
 save(dataPlot, file = "data/derived-data/dataPlot_WG3.rda")
 write.csv(dataPlot, file = "data/derived-data/dataPlot_WG3.csv")
 ```
+
 ## Visualisation
 
 ```{r data-vis, fig.height=10, fig.width = 6}
-subset(dataPlot, meas == "wd_ba") |> 
-  melt(measure.vars = c("stock", "recruitment", "growth", "mortality")) |>  
+subset(dataPlot, meas == "wd_ba") |>  
   subset(!(variable=="mortality" & Year < 1990)) |> # remove logging years with high mortality
   subset(!(variable=="recruitment" & class==2)) |> # remove recruitment of trees > 20 cm DBH
   ggplot(aes(x=Year, y = value, group = paste(Plot, class), col=factor(class)))+
