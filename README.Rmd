@@ -38,7 +38,7 @@ DataPrep <img src="man/figures/compendium-sticker.png" align="right" style="floa
 
 ## Overview
 
-This research compendium... **{{ DESCRIBE YOUR PROJECT }}**
+This research compendium is for Data prep... **{{ DESCRIBE YOUR PROJECT }}**
 
 
 
