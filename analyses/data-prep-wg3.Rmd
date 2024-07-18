@@ -38,6 +38,44 @@ print(summary(data))
 
 ## DBH correction
 
+### Add missing measurements 
+
+If a tree is not measured in a census and then reappears in a later census, we can consider that it was just missed. In this case, a possible correction is to replace the missed measurements by interpolating with the last DBH before it was missed and the next one after. 
+
+```{r interpolate-missing-trees}
+# list all possible years of census for every tree
+dfAll = data[, .(Year = seq(min(Year), max(Year))), .(Site, Plot, IdTree)] |> 
+  # only keep years when the plot was really censused
+  merge(unique(data[, c("Site", "Plot", "Year")]), by = c("Site", "Plot", "Year")) |> 
+  # add DBH measurements
+  merge(data[, c("IdTree", "Year", "Diameter")], by = c("IdTree", "Year"), all = TRUE)
+# spot missing measurements
+IdMissing = dfAll[is.na(Diameter), unique(IdTree)]
+# replace missing measurements 
+dfAll[, DiameterCor := Diameter]
+dfAll[IdTree %in% IdMissing, 
+      DiameterCor := approx(Year, Diameter, Year)$y, 
+      .(Site, Plot, IdTree)]
+```
+
+The following figure shows a sample of 12 trees corrected for missing DBH. The added DBH values are shown in red. 
+
+```{r, fig.height = 8, fig.width = 10}
+dfAll[IdTree %in% sample(IdMissing, 12)] |> 
+  ggplot(aes(x=Year)) + 
+  geom_point(aes(y=DiameterCor), col = 2) +
+  geom_point(aes(y=Diameter)) + 
+  facet_wrap(~IdTree, scales = "free")
+```
+
+```{r add-missing}
+data = merge(
+  data, dfAll[, -"Diameter"], 
+  by = c("Site", "Plot", "IdTree", "Year"), all = TRUE)
+```
+
+It is important to note that this correction may introduce some bias, as it will not be able to detect missed trees in the first and last censuses of a plot. 
+
 
 ## Functional traits
 
