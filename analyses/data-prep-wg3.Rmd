@@ -46,7 +46,8 @@ If a tree is not measured in a census and then reappears in a later census, we c
 # list all possible years of census for every tree
 dfAll = data[, .(Year = seq(min(Year), max(Year))), .(Site, Plot, IdTree)] |> 
   # only keep years when the plot was really censused
-  merge(unique(data[, c("Site", "Plot", "Year")]), by = c("Site", "Plot", "Year")) |> 
+  merge(unique(data[, c("Site", "Plot", "PlotArea", "Year")]), 
+        by = c("Site", "Plot", "Year")) |> 
   # add DBH measurements
   merge(data[, c("IdTree", "Year", "Diameter")], by = c("IdTree", "Year"), all = TRUE)
 # spot missing measurements
@@ -55,7 +56,7 @@ IdMissing = dfAll[is.na(Diameter), unique(IdTree)]
 dfAll[, DiameterCor := Diameter]
 dfAll[IdTree %in% IdMissing, 
       DiameterCor := approx(Year, Diameter, Year)$y, 
-      .(Site, Plot, IdTree)]
+      .(Site, Plot, PlotArea, IdTree)]
 ```
 
 The following figure shows a sample of 12 trees corrected for missing DBH. The added DBH values are shown in red. 
@@ -70,7 +71,7 @@ dfAll[IdTree %in% sample(IdMissing, 12)] |>
 
 ```{r add-missing}
 data = merge(
-  data, dfAll[, -"Diameter"], 
+  data[, -"PlotArea"], dfAll[, -"Diameter"], 
   by = c("Site", "Plot", "IdTree", "Year"), all = TRUE)
 ```
 
