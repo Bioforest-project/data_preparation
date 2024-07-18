@@ -100,7 +100,7 @@ We do not allow large trees to return to the "small" size class, which occurs wh
 
 ```{r tree-size-class}
 # small (10-20 cm DBH) and large (>= 20 cm DBH) trees
-data[, class := 1 + (Diameter >= 20)]
+data[, class := 1 + (DiameterCor >= 20)]
 
 # avoid trees switching between classes: once a tree is 'large' it cannot go back to 'small'
 setorder(data, Year)
@@ -112,9 +112,9 @@ data[!is.na(YL) & Year > YL, class := 2] # after YL: a tree cannot become small 
 
 ```{r check-corr-class, fig.height= 6, fig.width=10}
 # select a sample of 6 trees that have corrected size classes
-CorrClass = sample(data[class == 2 & Diameter < 20, unique(IdTree)], 12)
+CorrClass = sample(data[class == 2 & DiameterCor < 20, unique(IdTree)], 12)
 subset(data, IdTree %in% CorrClass) |> 
-  ggplot(aes(x = Year, y = Diameter, col = factor(class))) +
+  ggplot(aes(x = Year, y = DiameterCor, col = factor(class))) +
   geom_hline(yintercept = 20, lty=2) +
   geom_point() + 
   geom_line() + 
@@ -151,7 +151,7 @@ dataMort = data[mortYear == NextCensus & !is.na(mortYear)]
 dataMort[, `:=`(
   Year = NextCensus,
   status = "M",
-  Diameter = 0,
+  DiameterCor = 0,
   dT = NextCensus - Year
 )]
 data = rbind(data, dataMort)
@@ -162,7 +162,7 @@ We then calculate basal area per tree, and the tree-level change in basal area b
 ```{r ba-stocks-and-fluxes}
 setorder(data, Year)
 # basal area 
-data[, ba := pi*(Diameter/200)**2]
+data[, ba := pi*(DiameterCor/200)**2]
 # change in basal area (m2/yr) by tree
 data[, dba := c(NA, diff(ba)/diff(Year)), .(IdTree)]
 # for recruits: their basal area change is their basal area divided by the
