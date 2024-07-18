@@ -38,7 +38,9 @@ print(summary(data))
 
 ## DBH correction
 
+
 ## Functional traits
+
 
 ```{r get-ft-value}
 # get wood density 
@@ -89,7 +91,7 @@ setorder(data, Site, Plot, Year)
 dfYear = data[, .(Year = sort(unique(Year)),
                   firstCensus = min(Year),
                   NextCensus = c(sort(unique(Year))[-1], NA), 
-                  dT = c(diff(sort(unique(Year))), NA)), # census interval between this census and the next
+                  dT = c(NA, diff(sort(unique(Year))))), # census interval between this census and the previous one
               .(Site, Plot)]
 data = merge(data, dfYear, by = c("Site", "Plot", "Year"))
 ```
@@ -100,8 +102,9 @@ We divide trees into recruits (year of first measurement of a tree), other live 
 # live trees
 data[, status := "A"]
 
-# trees on year of recruitment: status = "R" for recruited tree
-data[, recrYear := min(Year), .(IdTree)] # first year of measurement by tree
+# trees on year of recruitment (or when changing classes): status = "R" for
+# recruited tree. First year of measurement by tree and size class:
+data[, recrYear := min(Year), .(IdTree, class)] 
 data[Year == recrYear & Year != firstCensus, status := "R"]
 
 # mortality: add one measurement with DBH = 0 after tree death
