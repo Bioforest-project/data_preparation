@@ -1,5 +1,5 @@
 ---
-title: "Data preparation for WG3"
+title: "Data preparation for Bioforest project"
 author: "Camille Piponiot"
 date: "2024-07-08"
 output: pdf_document
@@ -11,24 +11,36 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 library(data.table)
 library(BIOMASS)
 library(ggplot2)
+library(tidyverse)
 ```
 
-## Load data (Paracou)
+## Load all datasets 
+
 
 ```{r load-data}
-harmonized_files = list.files(path = "data/raw-data/", full.names = TRUE, pattern = "paracou")
+
+# make sure all datasets are inside the folder raw-data and are names as output_data_sitename with no spaces
+
+harmonized_files = list.files(path = "data/raw-data/", full.names = TRUE, pattern = "output_data")
 
 data = 
   lapply(harmonized_files, read.csv) |> 
-  rbindlist() |>
-  subset(LifeStatus == TRUE) |> 
+  rbindlist(use.names = TRUE, fill = TRUE) |> #why are there 2 columns lifestatus and lifestatus1 ?
+  subset(LifeStatus %in% c(TRUE, NA, "Normal", "Recruit")) |> 
   subset(Diameter >= MinDBH) |> 
+  subset(!(LifeForm %in% c("Palm", "Tree fan", "Death", "Vine"))) |>   # subsetting to remove life forms other                    
+  
+  #subset(LifeForm %in% c("trees;palms","Tree","NA", "trees")) |>   # subsetting to remove life forms other                                                                               than trees (when indicated)
+  #making modifications for each site as required
+  
+  # paracou
   # remove palms
-  subset(!(Genus %in% c("Oenocarpus", "Euterpe", "Astrocaryum") | VernName =="murumuru")) |> 
-  # Paracou
+  ##### do we need to remove these palms from other french guiana sites too?
+  #####what if we remove all rows with the following genus?
+  subset(!(Site == "Paracou" & Genus %in% c("Oenocarpus", "Euterpe", "Astrocaryum") & VernName =="murumuru")) |> 
   subset(!(Site == "Paracou" & as.numeric(Plot) == 16)) |>
   subset(!(Site == "Paracou" & (Year %in% c(1996, 1998, 2000, 2002)))) |> # Paracou: remove partial census years
-  subset(!(Site == "Paracou" & Year == 2010 & Plot == 15))  ## one fourth of plot 15 wasn't censused in 2010
+  subset(!(Site == "Paracou" & Year == 2010 & Plot == 15)) |> ## one fourth of plot 15 wasn't censused in 2010
 
 print(summary(data))
 ```
@@ -50,8 +62,18 @@ data[, wd := BIOMASS::getWoodDensity(Genus, Species, stand = Plot)$meanWD]
 ggplot(data, aes(x=wd)) + 
   geom_histogram() +
   labs(x = "Wood density (g.cm-3)") +
+  #facet_grid(. ~ Site) +
   theme_classic()
 ```
+
+## Diversity indices
+
+## DBH classes
+
+We define size classes in intervals of 10 cm DBH: Class 1 will include trees with a DBH between 10 and 20 cm, class 2-trees between DBH of 21-30 cm, class 3- 31-40 cm. This will allow in calculation of variables for each size class, which can later be grouped if required.
+
+For WP3: We do not allow large trees ($!=$) to return to the "small" size class, which occurs when the DBH of trees oscillates around 20 cm DBH.  
+
 
 ## DBH classes
 
