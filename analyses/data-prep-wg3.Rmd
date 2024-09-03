@@ -12,6 +12,7 @@ library(data.table)
 library(BIOMASS)
 library(ggplot2)
 library(tidyverse)
+library(entropart)
 ```
 
 ## Load all datasets 
@@ -37,7 +38,7 @@ data =
   # remove palms
   ##### do we need to remove these palms from other french guiana sites too?
   #####what if we remove all rows with the following genus?
-  subset(!(Site == "Paracou" & Genus %in% c("Oenocarpus", "Euterpe", "Astrocaryum") & VernName =="murumuru")) |> 
+  subset(!(Site == "Paracou" & (Genus %in% c("Oenocarpus", "Euterpe", "Astrocaryum") | VernName =="murumuru"))) |> 
   subset(!(Site == "Paracou" & as.numeric(Plot) == 16)) |>
   subset(!(Site == "Paracou" & (Year %in% c(1996, 1998, 2000, 2002)))) |> # Paracou: remove partial census years
   subset(!(Site == "Paracou" & Year == 2010 & Plot == 15)) |> ## one fourth of plot 15 wasn't censused in 2010
@@ -229,6 +230,14 @@ dataPlot =
       recruitment = mean(wd[status == "R"]), 
       growth = NA, 
       meas = "wd_n"
+    ), .(Site, Plot, Year, class)],
+    # shannon diversity associated with stocks and fluxes
+    data[, .(
+      stock = Diversity(as.vector(table(ScientificName)), q=1, CheckArguments= FALSE) |> suppressWarnings(), 
+      mortality = Diversity(as.vector(table(ScientificName[status == "M"])), q=1, CheckArguments= FALSE) |> suppressWarnings(), 
+      recruitment = Diversity(as.vector(table(ScientificName[status == "R"])), q=1, CheckArguments= FALSE) |> suppressWarnings(), 
+      growth = NA, 
+      meas = "div1_n"
     ), .(Site, Plot, Year, class)]
   )
 
@@ -255,7 +264,7 @@ dataPlot = merge(PlotInfo, dataPlot)
 
 ```{r save-results}
 save(dataPlot, file = "data/derived-data/dataPlot_WG3.rda")
-write.csv(dataPlot, file = "data/derived-data/dataPlot_WG3.csv")
+write.csv(dataPlot, file = "data/derived-data/dataPlot_WG3.csv", row.names = FALSE)
 ```
 
 ## Visualisation
