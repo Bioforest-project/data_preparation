@@ -30,24 +30,105 @@ data =
   subset(LifeStatus %in% c(TRUE, NA, "Normal", "Recruit")) |> 
   subset(Diameter >= MinDBH) |> 
   subset(!(LifeForm %in% c("Palm", "Tree fan", "Death", "Vine"))) |>   # subsetting to remove life forms other                    
+  # remove palm genera or vernacular names
+  subset(!Genus %in% c("Oenocarpus", "Euterpe", "Astrocaryum")) |>
+  subset(is.na(VernName) | VernName !="murumuru") |>   # Astrocaryum vernacular name in Paracou, only identified in the last censuses to vern name
   
   #subset(LifeForm %in% c("trees;palms","Tree","NA", "trees")) |>   # subsetting to remove life forms other                                                                               than trees (when indicated)
-  #making modifications for each site as required
   
+  #making modifications for each site as required
   # paracou
-  # remove palms
-  ##### do we need to remove these palms from other french guiana sites too?
-  #####what if we remove all rows with the following genus?
-  subset(!(Site == "Paracou" & (Genus %in% c("Oenocarpus", "Euterpe", "Astrocaryum") | VernName =="murumuru"))) |> 
   subset(!(Site == "Paracou" & as.numeric(Plot) == 16)) |>
   subset(!(Site == "Paracou" & (Year %in% c(1996, 1998, 2000, 2002)))) |> # Paracou: remove partial census years
-  subset(!(Site == "Paracou" & Year == 2010 & Plot == 15)) |> ## one fourth of plot 15 wasn't censused in 2010
+  subset(!(Site == "Paracou" & Year == 2010 & Plot == 15)) ## one fourth of plot 15 wasn't censused in 2010
 
 print(summary(data))
+table(data$Site)
+```
+We create a unique IdTree that combines the information on the site, plot, subplot (when the information exists) and tree tag or site-level tree id. 
+
+```{r}
+data[, IdTree := paste(Site, Plot, Subplot, IdTree, sep = "_")]
 ```
 
 
 ## Taxonomic correction
+
+First we need to harmonise species names.
+
+```{r}
+data[Site == "Moju", VernName := iconv(VernName, from = "ISO-8859-1", to = "UTF-8")]
+data[Site == "Moju", ScientificName := tstrsplit(VernName, "\\[|\\]")[[2]]]
+
+data[, c("Genus", "Species") := tstrsplit(ScientificName, " |_")[1:2]]
+```
+
+
+This correction is specific to Paracou: the missing species names can be assigned on the basis of a correspondence with the vernacular names. 
+
+```{r paracou-vername}
+if (any(data$Site == "Paracou")) {
+  
+  if (!require(vernabota)) remotes::install_github("EcoFoG/vernabota", build_vignettes = TRUE); library(vernabota)
+  
+  dataParacou = subset(data, Site == "Paracou")
+  dataParacou[, latin := paste(Genus, tstrsplit(Species, "_")[[1]])]
+  
+  # replace names of undetermined species with NA
+  
+  dataParacou[Species == "Indet.", latin := NA]
+  
+  # prepare data
+  dataVern <- data.table(
+    Plot = dataParacou$Plot,
+    CodeAlive = dataParacou$Original_CodeAlive, 
+    idTree = dataParacou$IdTree,  
+    BotaCertainty = 4 - 
+      2*grepl("Indet", dataParacou$Species) -
+      2*grepl("Indet", dataParacou$Genus), ## temp
+    BotaSource = ifelse(grepl("Indet", dataParacou$Genus), "Vern", "Bota"),
+    VernName = dataParacou$VernName, 
+    Family = dataParacou$Family, 
+    Genus = dataParacou$Genus, 
+    Species = dataParacou$Species
+  ) |> vernabota::PrepData()
+  
+  # priors
+  data(PriorAllFG_20220126)
+  data(PriorParacouNew_20220126)
+  data(PriorParacouOld_20220126)
+  PriorAllFG = vernabota::PrepPrior(PriorAllFG_20220126)
+  PriorParacouNew = vernabota::PrepPrior(PriorParacouNew_20220126)
+  PriorParacouOld = vernabota::PrepPrior(PriorParacouOld_20220126)
+  
+  options = data.table(
+    Plot = 1:15, 
+    Prior = c("PriorParacouNew", "PriorParacouOld", "PriorParacouNew", "PriorAllFG", 
+              "PriorParacouNew", "PriorParacouOld", "PriorParacouNew", "PriorAllFG", 
+              "PriorParacouNew", "PriorParacouNew", "PriorAllFG", "PriorParacouOld", 
+              "PriorParacouNew", "PriorAllFG", "PriorParacouOld")
+  )
+  
+  dataVern = rbindlist(
+    lapply(1:15, function(p) {
+      rbindlist(suppressWarnings(vernabota::SimFullCom(
+        Data2fill = dataVern[Plot == p], 
+        prior = get(options[Plot==p]$Prior), 
+        wp = 0.25, 
+        NSim = 1, 
+        eps = 0.01,
+        Determ = TRUE
+      )), idcol = "sim")
+    })
+  )
+  
+  data = merge(data, unique(dataVern[, c("idTree", "GensSpCor")]), 
+               by.x = "IdTree", by.y = "idTree", all.x = TRUE)
+  data[Site == "Paracou", c("Genus", "Species") := tstrsplit(GensSpCor, "-")[1:2]]
+  data[,GensSpCor := NULL]
+}
+
+```
 
 ## DBH correction
 
@@ -62,7 +143,8 @@ dfAll = data[, .(Year = seq(min(Year), max(Year))), .(Site, Plot, IdTree)] |>
   merge(unique(data[, c("Site", "Plot", "PlotArea", "Year")]), 
         by = c("Site", "Plot", "Year")) |> 
   # add DBH measurements
-  merge(data[, c("IdTree", "Year", "Diameter")], by = c("IdTree", "Year"), all = TRUE)
+  merge(data[, c("IdTree", "Year", "Diameter")], 
+        by = c("IdTree", "Year"), all = TRUE)
 # spot missing measurements
 IdMissing = dfAll[is.na(Diameter), unique(IdTree)]
 # replace missing measurements 
@@ -79,7 +161,7 @@ dfAll[IdTree %in% sample(IdMissing, 12)] |>
   ggplot(aes(x=Year)) + 
   geom_point(aes(y=DiameterCor), col = 2) +
   geom_point(aes(y=Diameter)) + 
-  facet_wrap(~IdTree, scales = "free")
+  facet_wrap(~paste(Site, Plot, IdTree), scales = "free")
 ```
 
 ```{r add-missing}
@@ -96,15 +178,14 @@ It is important to note that this correction may introduce some bias, as it will
 
 ```{r get-ft-value}
 # get wood density 
-data[, wd := BIOMASS::getWoodDensity(Genus, Species, stand = Plot)$meanWD]
+data[, wd := BIOMASS::getWoodDensity(Genus, Species, stand = paste(Site, Plot, Year))$meanWD]
 ```
 
 ```{r plot-ft}
 # plot distribution of wood density values
-ggplot(data, aes(x=wd)) + 
-  geom_histogram() +
+ggplot(data, aes(x=wd, fill = Site)) + 
+  geom_density(alpha = 0.5) +
   labs(x = "Wood density (g.cm-3)") +
-  #facet_grid(. ~ Site) +
   theme_classic()
 ```
 
@@ -136,13 +217,13 @@ data[!is.na(YL) & Year > YL, class := 2] # after YL: a tree cannot become small 
 
 ```{r check-corr-class, fig.height= 6, fig.width=10}
 # select a sample of 6 trees that have corrected size classes
-CorrClass = sample(data[class == 2 & DiameterCor < 20, unique(IdTree)], 12)
+CorrClass = sample(data[class == 2 & DiameterCor < 20, IdTree], 12)
 subset(data, IdTree %in% CorrClass) |> 
   ggplot(aes(x = Year, y = DiameterCor, col = factor(class))) +
   geom_hline(yintercept = 20, lty=2) +
   geom_point() + 
   geom_line() + 
-  facet_wrap(~IdTree, scales = "free") 
+  facet_wrap(~paste(Site, Plot, IdTree), scales = "free") 
 ```
 
 # Tree-by-tree stocks and fluxes
@@ -166,11 +247,11 @@ data[, status := "A"]
 
 # trees on year of recruitment (or when changing classes): status = "R" for
 # recruited tree. First year of measurement by tree and size class:
-data[, recrYear := min(Year), .(IdTree, class)] 
+data[, recrYear := min(Year), .(Site, IdTree, class)] 
 data[Year == recrYear & Year != firstCensus, status := "R"]
 
 # mortality: add one measurement with DBH = 0 after tree death
-data[, mortYear := max(NextCensus), .(IdTree)]
+data[, mortYear := max(NextCensus), .(Site, IdTree)]
 dataMort = data[mortYear == NextCensus & !is.na(mortYear)]
 dataMort[, `:=`(
   Year = NextCensus,
@@ -233,10 +314,10 @@ dataPlot =
     ), .(Site, Plot, Year, class)],
     # shannon diversity associated with stocks and fluxes
     data[, .(
-      stock = Diversity(as.vector(table(ScientificName)), q=1, CheckArguments= FALSE) |> suppressWarnings(), 
-      mortality = Diversity(as.vector(table(ScientificName[status == "M"])), q=1, CheckArguments= FALSE) |> suppressWarnings(), 
-      recruitment = Diversity(as.vector(table(ScientificName[status == "R"])), q=1, CheckArguments= FALSE) |> suppressWarnings(), 
-      growth = NA, 
+      stock = Diversity(as.vector(table(ScientificName)), q=1, CheckArguments= FALSE, Correction = "None") |> suppressWarnings(), 
+      mortality = Diversity(as.vector(table(ScientificName[status == "M"])), q=1, CheckArguments= FALSE, Correction = "None") |> suppressWarnings(), 
+      recruitment = Diversity(as.vector(table(ScientificName[status == "R"])), q=1, CheckArguments= FALSE, Correction = "None") |> suppressWarnings(), 
+      growth = Diversity(as.vector(table(ScientificName[status == "A"])), q=1, CheckArguments= FALSE, Correction = "None")|> suppressWarnings(), # diversity of survivors
       meas = "div1_n"
     ), .(Site, Plot, Year, class)]
   )
@@ -258,22 +339,25 @@ PlotInfo = data.frame(
 )
 # Paracou control plots
 PlotInfo$treat[PlotInfo$Plot %in% c(1, 6, 11, 13:15)] = "control"
-dataPlot = merge(PlotInfo, dataPlot)
+dataPlot = merge(PlotInfo, dataPlot, all.y = TRUE)
 ```
 
 
 ```{r save-results}
 save(dataPlot, file = "data/derived-data/dataPlot_WG3.rda")
 write.csv(dataPlot, file = "data/derived-data/dataPlot_WG3.csv", row.names = FALSE)
+# save(dataPlot, file = "D:/github/Demography/data/derived-data/dataPlot_WG3.rda")
+# write.csv(dataPlot, file = "D:/github/Demography/data/derived-data/dataPlot_WG3.csv", row.names = FALSE)
 ```
 
 ## Visualisation
 
-```{r data-vis, fig.height=10, fig.width = 6}
+```{r data-vis, fig.height=8, fig.width = 16}
 subset(dataPlot, meas == "wd_ba") |>  
   subset(!(variable=="mortality" & Year < 1990)) |> # remove logging years with high mortality
-  subset(!(variable=="recruitment" & class==2)) |> # remove recruitment of trees > 20 cm DBH
+  # subset(!(variable=="recruitment" & class==2)) |> # remove recruitment of trees > 20 cm DBH
   ggplot(aes(x=Year, y = value, group = paste(Plot, class), col=factor(class)))+
   geom_point() + geom_line() +
+  lims(y = c(0, 1)) +
   facet_grid(variable ~ Site, scales = "free")
 ```
