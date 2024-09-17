@@ -67,30 +67,32 @@ data[, c("Genus", "Species") := tstrsplit(ScientificName, " |_")[1:2]]
 This correction is specific to Paracou: the missing species names can be assigned on the basis of a correspondence with the vernacular names. 
 
 ```{r paracou-vername}
-if (any(data$Site == "Paracou")) {
+FGSites = c("Paracou", "Bafog", "Montagne_Tortue", "Manare") 
+if (any(data$Site %in% FGSites)) {
   
   if (!require(vernabota)) remotes::install_github("EcoFoG/vernabota", build_vignettes = TRUE); library(vernabota)
   
-  dataParacou = subset(data, Site == "Paracou")
-  dataParacou[, latin := paste(Genus, tstrsplit(Species, "_")[[1]])]
+  dataFG = subset(data, Site %in% FGSites)
+  dataFG[, latin := paste(Genus, tstrsplit(Species, "_")[[1]])]
   
   # replace names of undetermined species with NA
   
-  dataParacou[Species == "Indet.", latin := NA]
+  dataFG[Species == "Indet.", latin := NA]
   
   # prepare data
   dataVern <- data.table(
-    Plot = dataParacou$Plot,
-    CodeAlive = dataParacou$Original_CodeAlive, 
-    idTree = dataParacou$IdTree,  
+    Site = dataFG$Site,
+    Plot = dataFG$Plot,
+    CodeAlive = dataFG$Original_CodeAlive, 
+    idTree = dataFG$IdTree,  
     BotaCertainty = 4 - 
-      2*grepl("Indet", dataParacou$Species) -
-      2*grepl("Indet", dataParacou$Genus), ## temp
-    BotaSource = ifelse(grepl("Indet", dataParacou$Genus), "Vern", "Bota"),
-    VernName = dataParacou$VernName, 
-    Family = dataParacou$Family, 
-    Genus = dataParacou$Genus, 
-    Species = dataParacou$Species
+      2*grepl("Indet", dataFG$Species) -
+      2*grepl("Indet", dataFG$Genus), ## temp
+    BotaSource = ifelse(grepl("Indet", dataFG$Genus), "Vern", "Bota"),
+    VernName = dataFG$VernName, 
+    Family = dataFG$Family, 
+    Genus = dataFG$Genus, 
+    Species = dataFG$Species
   ) |> vernabota::PrepData()
   
   # priors
@@ -102,33 +104,66 @@ if (any(data$Site == "Paracou")) {
   PriorParacouOld = vernabota::PrepPrior(PriorParacouOld_20220126)
   
   options = data.table(
+    Site = "Paracou",
     Plot = 1:15, 
     Prior = c("PriorParacouNew", "PriorParacouOld", "PriorParacouNew", "PriorAllFG", 
               "PriorParacouNew", "PriorParacouOld", "PriorParacouNew", "PriorAllFG", 
               "PriorParacouNew", "PriorParacouNew", "PriorAllFG", "PriorParacouOld", 
               "PriorParacouNew", "PriorAllFG", "PriorParacouOld")
-  )
+  ) 
   
-  dataVern = rbindlist(
-    lapply(1:15, function(p) {
-      rbindlist(suppressWarnings(vernabota::SimFullCom(
-        Data2fill = dataVern[Plot == p], 
-        prior = get(options[Plot==p]$Prior), 
-        wp = 0.25, 
-        NSim = 1, 
-        eps = 0.01,
-        Determ = TRUE
-      )), idcol = "sim")
-    })
-  )
+  dataVern = 
+    # Paracou
+    rbindlist(
+      lapply(seq_len(nrow(options)), function(i) {
+        rbindlist(suppressWarnings(vernabota::SimFullCom(
+          Data2fill = dataVern[Site == "Paracou" & Plot == options$Plot[i]], 
+          prior = get(options$Prior[i]), 
+          wp = 0.25, 
+          NSim = 1, 
+          eps = 0.01,
+          Determ = TRUE
+        )))
+      })) |> rbind(
+        # other sites
+        rbindlist(
+          lapply(FGSites[FGSites!="Paracou"], function(s) {
+            rbindlist(suppressWarnings(vernabota::SimFullCom(
+              Data2fill = dataVern[Site == s], 
+              prior = PriorAllFG, 
+              wp = 0.25, 
+              NSim = 1, 
+              eps = 0.01,
+              Determ = TRUE
+            )))
+          })
+        )
+      )
+  
   
   data = merge(data, unique(dataVern[, c("idTree", "GensSpCor")]), 
                by.x = "IdTree", by.y = "idTree", all.x = TRUE)
-  data[Site == "Paracou", c("Genus", "Species") := tstrsplit(GensSpCor, "-")[1:2]]
+  data[Site %in% FGSites, c("Genus", "Species") := tstrsplit(GensSpCor, "-")[1:2]]
   data[,GensSpCor := NULL]
 }
 
 ```
+
+Levels of species identification per site 
+
+```{r fig.width=8, fig.height=4}
+dataIndet = data[, .(
+  pIndet_Sp = sum(grepl("undet|indet|sp\\.|sp$|spp.|spp.|L.", tolower(Species)) | is.na(Species))/ length(Species), 
+  pIndet_Gen = sum(grepl("undet|indet", tolower(Genus)) | is.na(Genus))/ length(Genus)), 
+  .(Site, Year)] 
+
+melt(dataIndet, id.vars = c("Site", "Year")) |> 
+  ggplot(aes(x = Year, color = Site, y = value)) + 
+  geom_point() + 
+  geom_line() + 
+  facet_wrap(~variable)
+```
+
 
 ## DBH correction
 
