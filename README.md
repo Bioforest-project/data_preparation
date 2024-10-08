@@ -65,3 +65,5 @@ The whole group consist of participants to the [Bioforest
 project](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/le-cesab/bioforest/).
 
 ![](https://www.fondationbiodiversite.fr/wp-content/uploads/2023/10/bioforest-ws1_web.jpeg)
+
+
