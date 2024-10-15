@@ -1,5 +1,5 @@
 # Data Preparation
-Oct 8, 2024
+Oct 15, 2024
 
 <div>
 
@@ -18,9 +18,8 @@ steps:
 
 **data_preparation** is only linking for the subtasks for now. See:
 
-- **inventories**:
-  <https://github.com/Bioforest-project/DataAgr_inventories>
-- **species**: <https://github.com/Bioforest-project/DataAgr_Species>
+- **inventories**: <https://github.com/Bioforest-project/inventories>
+- **species**: <https://github.com/Bioforest-project/species>
 - **environment**: <https://github.com/Bioforest-project/environment>
 
 ## Project
@@ -47,10 +46,9 @@ steps:
 Please preferentially create an issue on GitHub for any questions, bugs
 or help needed regarding **data_preparation**:
 <a href="https://github.com/Bioforest-project/environment/issues"
-class="uri">https://github.com/Bioforest-project/</a><a href="https://github.com/Bioforest-project/environment/issues"
-class="uri">data_preparation</a><a href="https://github.com/Bioforest-project/environment/issues"
-class="uri">/issues</a> . You may however reach us by mail with people
-from the core group (see below).
+class="uri">https://github.com/Bioforest-project/data_preparation/issues</a>
+. You may however reach us by mail with people from the core group (see
+below).
 
 ## Core group
 
