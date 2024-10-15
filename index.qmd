@@ -10,8 +10,8 @@
 
 **data_preparation** is only linking for the subtasks for now. See:
 
--   **inventories**: <https://github.com/Bioforest-project/DataAgr_inventories>
--   **species**: <https://github.com/Bioforest-project/DataAgr_Species>
+-   **inventories**: <https://github.com/Bioforest-project/inventories>
+-   **species**: <https://github.com/Bioforest-project/species>
 -   **environment**: <https://github.com/Bioforest-project/environment>
 
 ## Project
@@ -33,7 +33,7 @@
 
 ## Help
 
-Please preferentially create an issue on GitHub for any questions, bugs or help needed regarding **data_preparation**: [https://github.com/Bioforest-project/](https://github.com/Bioforest-project/environment/issues){.uri}[data_preparation](https://github.com/Bioforest-project/environment/issues){.uri}[/issues](https://github.com/Bioforest-project/environment/issues){.uri} . You may however reach us by mail with people from the core group (see below).
+Please preferentially create an issue on GitHub for any questions, bugs or help needed regarding **data_preparation**: [https://github.com/Bioforest-project/data_preparation/issues](https://github.com/Bioforest-project/environment/issues){.uri} . You may however reach us by mail with people from the core group (see below).
 
 ## Core group
 

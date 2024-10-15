@@ -11,7 +11,7 @@
     "href": "index.html#usage",
     "title": "Data Preparation",
     "section": "Usage",
-    "text": "Usage\ndata_preparation is only linking for the subtasks for now. See:\n\ninventories: https://github.com/Bioforest-project/DataAgr_inventories\nspecies: https://github.com/Bioforest-project/DataAgr_Species\nenvironment: https://github.com/Bioforest-project/environment"
+    "text": "Usage\ndata_preparation is only linking for the subtasks for now. See:\n\ninventories: https://github.com/Bioforest-project/inventories\nspecies: https://github.com/Bioforest-project/species\nenvironment: https://github.com/Bioforest-project/environment"
   },
   {
     "objectID": "index.html#project",
