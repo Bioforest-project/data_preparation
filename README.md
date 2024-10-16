@@ -1,11 +1,8 @@
 # Data Preparation
 Oct 16, 2024
 
-<div>
-
 [![](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
-
-</div>
+[![lint](https://github.com/Bioforest-project/data_preparation/workflows/lint/badge.svg)](https://github.com/Bioforest-project/data_preparation/actions?query=workflow%3Alint)
 
 **data_preparation** is a sub-project of the
 [**BioForest**](https://github.com/Bioforest-project) project aimed at
@@ -26,20 +23,27 @@ steps:
 
 **data_preparation** includes:
 
-- Presentaiton of the analyses with associated [documentation and
+- Presentation of the analyses with associated [documentation and
   figures](https://bioforest-project.github.io/data_preparation/):
   - Reproductive analyses in `files.qmd`
   - Resulting pages in `docs/`
   - Document structure definition in `_quarto.yml`
-- Git and GitHub files (`.gitignore`)
-- Project documentation (`README.qmd` , `README.md` , `NEWS.md` )
-
-> Should we add a license?
+- Figures in `figures/`
+- R environment definition with
+  [renv](https://rstudio.github.io/renv/articles/renv.html) in `renv/`
+  and `renv/lock`
+- R files (`.Rbuildignore` , `.Rdata` , `.Rprofile` , `.Rhistory`)
+- Git and GitHub files (`.gitignore` , `.github/`)
+- Project documentation (`README.qmd` , `README.md` , `NEWS.md` ,
+  `LICENSE`)
 
 ## Contribution
 
-> Should we add a contribution link here instead of a description within
-> each project?
+You can contribute to the project by forking the repository on github
+and cloning the fork to your machine using several options, including
+GitHub desktop GUI. Further informations on contribution are detailed in
+the online document:
+<https://bioforest-project.github.io/data_preparation/98_contributing.html>.
 
 ## Help
 

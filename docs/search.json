@@ -18,14 +18,14 @@
     "href": "index.html#project",
     "title": "Data Preparation",
     "section": "Project",
-    "text": "Project\ndata_preparation includes:\n\nPresentaiton of the analyses with associated documentation and figures:\n\nReproductive analyses in files.qmd\nResulting pages in docs/\nDocument structure definition in _quarto.yml\n\nGit and GitHub files (.gitignore)\nProject documentation (README.qmd , README.md , NEWS.md )\n\n\nShould we add a license?"
+    "text": "Project\ndata_preparation includes:\n\nPresentation of the analyses with associated documentation and figures:\n\nReproductive analyses in files.qmd\nResulting pages in docs/\nDocument structure definition in _quarto.yml\n\nFigures in figures/\nR environment definition with renv in renv/ and renv/lock\nR files (.Rbuildignore , .Rdata , .Rprofile , .Rhistory)\nGit and GitHub files (.gitignore , .github/)\nProject documentation (README.qmd , README.md , NEWS.md , LICENSE)"
   },
   {
     "objectID": "index.html#contribution",
     "href": "index.html#contribution",
     "title": "Data Preparation",
     "section": "Contribution",
-    "text": "Contribution\n\nShould we add a contribution link here instead of a description within each project?"
+    "text": "Contribution\nYou can contribute to the project by forking the repository on github and cloning the fork to your machine using several options, including GitHub desktop GUI. Further informations on contribution are detailed in the online document: https://bioforest-project.github.io/data_preparation/98_contributing.html."
   },
   {
     "objectID": "index.html#help",
