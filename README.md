@@ -1,5 +1,5 @@
 # Data Preparation
-Oct 15, 2024
+Oct 16, 2024
 
 <div>
 
@@ -12,7 +12,7 @@ Oct 15, 2024
 data preparation within the project, itself divided in the following
 steps:
 
-![](diagram.png)
+![](figures/diagram.png)
 
 ## Usage
 

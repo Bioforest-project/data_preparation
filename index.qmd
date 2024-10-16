@@ -4,7 +4,7 @@
 
 **data_preparation** is a sub-project of the [**BioForest**](https://github.com/Bioforest-project) project aimed at data preparation within the project, itself divided in the following steps:
 
-![](diagram.png)
+![](figures/diagram.png)
 
 ## Usage
 
