@@ -1,11 +1,6 @@
-# macOS files ----
-.DS_Store
-
-# History files ----
+# R
+.Rproj.user
 .Rhistory
-.Rapp.history
-
-# Session Data files ----
 .RData
 .Ruserdata
 
@@ -22,3 +17,7 @@ inst/doc
 man/
 NAMESPACE
 data/
+*_cache
+/.quarto/
+.snakemake
+report.html

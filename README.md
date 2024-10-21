@@ -1,95 +1,69 @@
+# Data Preparation
+Oct 16, 2024
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
+[![](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![lint](https://github.com/Bioforest-project/data_preparation/workflows/lint/badge.svg)](https://github.com/Bioforest-project/data_preparation/actions?query=workflow%3Alint)
 
-# DataPrep <img src="man/figures/compendium-sticker.png" align="right" style="float:right; height:120px;"/>
+**data_preparation** is a sub-project of the
+[**BioForest**](https://github.com/Bioforest-project) project aimed at
+data preparation within the project, itself divided in the following
+steps:
 
-<!-- badges: start -->
-<!-- badges: end -->
-<p align="left">
-• <a href="#overview">Overview</a><br> •
-<a href="#features">Features</a><br> •
-<a href="#content">Content</a><br> •
-<a href="#installation">Installation</a><br> •
-<a href="#usage">Usage</a><br> • <a href="#citation">Citation</a><br> •
-<a href="#contributing">Contributing</a><br> •
-<a href="#acknowledgments">Acknowledgments</a><br> •
-<a href="#references">References</a>
-</p>
-
-## Overview
-
-This research compendium is for Data prep… **{{ DESCRIBE YOUR PROJECT
-}}**
-
-## Features
-
-The main purpose of this compendium is to… **{{ DESCRIBE THE MAIN
-FEATURES }}**
-
-## Content
-
-This repository is structured as follow:
-
-- [`DESCRIPTION`](https://github.com/cpiponiot/DataPrep/tree/master/DESCRIPTION):
-  contains project metadata (authors, date, dependencies, etc.)
-
-- [`make.R`](https://github.com/cpiponiot/DataPrep/tree/master/make.R):
-  main R script to run the entire project
-
-- [`R/`](https://github.com/cpiponiot/DataPrep/tree/master/R): contains
-  R functions developed especially for this project
-
-- **{{ LIST ADDITIONAL FILES/FOLDER }}**
-
-## Installation
-
-To install this compendium:
-
-- [Fork](https://docs.github.com/en/get-started/quickstart/contributing-to-projects)
-  this repository using the GitHub interface.
-- [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository)
-  your fork using `git clone fork-url` (replace `fork-url` by the URL of
-  your fork). Alternatively, open [RStudio
-  IDE](https://posit.co/products/open-source/rstudio/) and create a New
-  Project from Version Control.
+![](figures/diagram.png)
 
 ## Usage
 
-Launch the
-[`make.R`](https://github.com/cpiponiot/DataPrep/tree/master/make.R)
-file with:
+**data_preparation** is only linking for the subtasks for now. See:
 
-``` r
-source("make.R")
-```
+- **inventories**: <https://github.com/Bioforest-project/inventories>
+- **species**: <https://github.com/Bioforest-project/species>
+- **environment**: <https://github.com/Bioforest-project/environment>
 
-**Notes**
+## Project
 
-- All required packages listed in the `DESCRIPTION` file will be
-  installed (if necessary)
-- All required packages and R functions will be loaded
-- Some analyses listed in the `make.R` might take time
+**data_preparation** includes:
 
-## Citation
+- Presentation of the analyses with associated [documentation and
+  figures](https://bioforest-project.github.io/data_preparation/):
+  - Reproductive analyses in `files.qmd`
+  - Resulting pages in `docs/`
+  - Document structure definition in `_quarto.yml`
+- Figures in `figures/`
+- R environment definition with
+  [renv](https://rstudio.github.io/renv/articles/renv.html) in `renv/`
+  and `renv/lock`
+- R files (`.Rbuildignore` , `.Rdata` , `.Rprofile` , `.Rhistory`)
+- Git and GitHub files (`.gitignore` , `.github/`)
+- Project documentation (`README.qmd` , `README.md` , `NEWS.md` ,
+  `LICENSE`)
 
-Please use the following citation:
+## Contribution
 
-> **{{ ADD A CITATION }}**
+You can contribute to the project by forking the repository on github
+and cloning the fork to your machine using several options, including
+GitHub desktop GUI. Further informations on contribution are detailed in
+the online document:
+<https://bioforest-project.github.io/data_preparation/98_contributing.html>.
 
-## Contributing
+## Help
 
-All types of contributions are encouraged and valued. For more
-information, check out our [Contributor
-Guidelines](https://github.com/cpiponiot/DataPrep/blob/main/CONTRIBUTING.md).
+Please preferentially create an issue on GitHub for any questions, bugs
+or help needed regarding **data_preparation**:
+<a href="https://github.com/Bioforest-project/environment/issues"
+class="uri">https://github.com/Bioforest-project/data_preparation/issues</a>
+. You may however reach us by mail with people from the core group (see
+below).
 
-Please note that this project is released with a [Contributor Code of
-Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html).
-By contributing to this project, you agree to abide by its terms.
+## Core group
 
-## Acknowledgments
+- Sylvain Schmitt (sylvain.schmitt@cirad.fr)
+- Camille Piponiot-Laroche (camille.piponiot-laroche@cirad.fr)
+- Géraldine Derroire (geraldine.derroire@cirad.fr)
+- Mithila Unkule (mithila.unkule@fondationbiodiversite.fr)
+- Irié Cazimir Zo-Bi (iczobi@gmail.com)
+- Anand Roopsind (aroopsind@gmail.com)
 
-**{{ OPTIONAL SECTION }}**
+The whole group consist of participants to the [Bioforest
+project](https://www.fondationbiodiversite.fr/la-frb-en-action/programmes-et-projets/le-cesab/bioforest/).
 
-## References
-
-**{{ OPTIONAL SECTION }}**
+![](https://www.fondationbiodiversite.fr/wp-content/uploads/2023/10/bioforest-ws1_web.jpeg)

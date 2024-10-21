@@ -1,3 +1,16 @@
-# README
+# Figures
+Oct 16, 2024
 
-**{{ PLEASE DESCRIBE THE CONTENT OF THIS FOLDER}}**
+All figures (.png, .pdf, etc.):
+
+- …
+
+``` r
+fs::dir_tree()
+```
+
+    .
+    ├── README.md
+    ├── README.qmd
+    ├── README.rmarkdown
+    └── diagram.png
